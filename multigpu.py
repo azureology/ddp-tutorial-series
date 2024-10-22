@@ -55,7 +55,7 @@ class Trainer:
 
     def _save_checkpoint(self, epoch):
         ckp = self.model.module.state_dict()
-        PATH = "checkpoint.pt"
+        PATH = f"checkpoint_{epoch}.pt"
         torch.save(ckp, PATH)
         print(f"Epoch {epoch} | Training checkpoint saved at {PATH}")
 
@@ -95,8 +95,8 @@ def main(rank: int, world_size: int, save_every: int, total_epochs: int, batch_s
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description='simple distributed training job')
-    parser.add_argument('total_epochs', type=int, help='Total epochs to train the model')
-    parser.add_argument('save_every', type=int, help='How often to save a snapshot')
+    parser.add_argument('--total_epochs', default=100, type=int, help='Total epochs to train the model')
+    parser.add_argument('--save_every', default=10, type=int, help='How often to save a snapshot')
     parser.add_argument('--batch_size', default=32, type=int, help='Input batch size on each device (default: 32)')
     args = parser.parse_args()
 
