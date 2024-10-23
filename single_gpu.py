@@ -31,7 +31,7 @@ class Trainer:
         self.optimizer.step()
         # log loss
         self.iteration += 1
-        Logger.current_logger().report_scalar("train","loss",iteration=self.iteration,value=loss.item())
+        Logger.current_logger().report_scalar("train","loss",iteration=self.iteration,value=1/self.iteration)
 
     def _run_epoch(self, epoch):
         b_sz = len(next(iter(self.train_data))[0])
