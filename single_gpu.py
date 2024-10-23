@@ -90,3 +90,6 @@ if __name__ == "__main__":
     task = Task.init()
     device = 0  # shorthand for cuda:0
     main(device, args.total_epochs, args.save_every, args.batch_size)
+    # test out upload artifact
+    task.upload_artifact(name='persist_model', artifact_object=os.path.join(gettempdir(), "final_model.pt"))
+    
