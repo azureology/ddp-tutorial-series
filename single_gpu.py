@@ -2,6 +2,9 @@ import torch
 import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 from datautils import MyTrainDataset
+import os
+from tempfile import gettempdir
+from clearml import Task, Logger
 
 
 class Trainer:
@@ -18,6 +21,7 @@ class Trainer:
         self.train_data = train_data
         self.optimizer = optimizer
         self.save_every = save_every
+        self.iteration = 0
 
     def _run_batch(self, source, targets):
         self.optimizer.zero_grad()
@@ -25,6 +29,9 @@ class Trainer:
         loss = F.cross_entropy(output, targets)
         loss.backward()
         self.optimizer.step()
+        # log loss
+        self.iteration += 1
+        Logger.current_logger().report_scalar("train","loss",iteration=self.iteration,value=loss.item())
 
     def _run_epoch(self, epoch):
         b_sz = len(next(iter(self.train_data))[0])
@@ -36,7 +43,7 @@ class Trainer:
 
     def _save_checkpoint(self, epoch):
         ckp = self.model.state_dict()
-        PATH = f"checkpoint_{epoch}.pt"
+        PATH = os.path.join(gettempdir(), f"checkpoint_{epoch}.pt")
         torch.save(ckp, PATH)
         print(f"Epoch {epoch} | Training checkpoint saved at {PATH}")
 
@@ -68,6 +75,8 @@ def main(device, total_epochs, save_every, batch_size):
     train_data = prepare_dataloader(dataset, batch_size)
     trainer = Trainer(model, train_data, optimizer, device, save_every)
     trainer.train(total_epochs)
+    # save final model
+    torch.save(model.state_dict(), os.path.join(gettempdir(), "final_model.pt"))
 
 
 if __name__ == "__main__":
@@ -77,6 +86,7 @@ if __name__ == "__main__":
     parser.add_argument('--save_every', default=10, type=int, help='How often to save a snapshot')
     parser.add_argument('--batch_size', default=32, type=int, help='Input batch size on each device (default: 32)')
     args = parser.parse_args()
-    
+    # init clearml task
+    task = Task.init()
     device = 0  # shorthand for cuda:0
     main(device, args.total_epochs, args.save_every, args.batch_size)
